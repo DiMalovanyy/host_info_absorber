@@ -116,7 +116,7 @@ function process_host {
 				printf "\"," >> ${output_file}
 			else
 				printf "\t\tPort does not exist\n"
-				printf "Not Exist," >> ${output_file}
+				printf "\"Not Exist or\nNot Working\n\"," >> ${output_file}
 			fi
 		fi
 	done
