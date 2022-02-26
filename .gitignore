@@ -1,0 +1,6 @@
+**/*.swp
+absorber
+*.o
+*.csv
+*.numbers
+.DS_Store
