@@ -18,17 +18,17 @@ main.o: src/main.c
 
 csv.o: src/utils/csv/csv.c
 	@echo "[Make]: compile csv framework"
-	gcc -c -o csv.o src/utils/csv/csv.c
+	gcc -c -o csv.o src/utils/csv/csv.c -g
 
 absorber_test: test.o test_csv.o csv.o
 	@echo "[Make]: test target"
 	gcc -o absorber_test $(INCLUDE_DIRS) $(LIBRARY_DIRS) test.o test_csv.o csv.o -g
 
 test.o: test/test.c
-	gcc -c -o test.o test/test.c
+	gcc -c -o test.o test/test.c -g
 
 test_csv.o: test/csv/test_csv.c
-	gcc -c -Itest/ -Isrc/ -o test_csv.o test/csv/test_csv.c
+	gcc -c -Itest/ -Isrc/ -o test_csv.o test/csv/test_csv.c -g
 
 
 install_deps:

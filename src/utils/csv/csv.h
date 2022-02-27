@@ -2,6 +2,7 @@
 #define csv_h
 
 #include <stdint.h>
+#include <stdio.h>
 
 //For sources
 
@@ -46,6 +47,9 @@ void free_csv(csv_t* csv);
 void append_cell_to_csv(csv_t* csv, const char* data);
 void append_row_to_csv(csv_t* csv, const csv_data_t row_data);
 int serialize_csv(const csv_t* csv, int output_fd);
+
+uint16_t get_rows_amount(csv_t* csv);
+void debug_print_csv(csv_t* csv, FILE* output_stream);
 
 
 #endif

@@ -1,6 +1,5 @@
 #include "csv.h"
 
-#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -39,12 +38,12 @@ void append_cell_to_csv(csv_t* csv, const char* data) {
 
 	uint16_t cells_amount = cur_row ? cur_row->data.cells_amount : 0;
 	if (cur_row && cells_amount < csv->metadata->size.columns_count) {
-		cur_row->data.cells[cells_amount] = malloc(sizeof(char) * strlen(data) + 1);
 		strncpy(cur_row->data.cells[cells_amount], data, MAX_CSV_CELL_SIZE);
 		cur_row->data.cells_amount++;
 	} else {	
 		struct csv_row* new_row = (struct csv_row*)malloc(sizeof(struct csv_row));
 		new_row->data = alloc_csv_row(csv->metadata->size.columns_count);
+		new_row->data.cells_amount++;
 		strncpy(new_row->data.cells[0], data, MAX_CSV_CELL_SIZE);
 
 		if (cur_row) {
@@ -54,9 +53,7 @@ void append_cell_to_csv(csv_t* csv, const char* data) {
 		} else {
 			new_row->prev = NULL;
 			new_row->next = NULL;
-			cur_row = new_row;
-
-			debug_print_csv_row(csv->csv_row->data, 3, stdout);
+			csv->csv_row = new_row;
 		}
 	}
 
@@ -93,9 +90,35 @@ int serialize_csv(const csv_t* csv, int output_fd) {
 	}
 
 	for(;cur_row != NULL; cur_row = cur_row -> next) {
-		char row_buffer[metadata->size.columns_count * MAX_CSV_CELL_SIZE + 1];
+		uint16_t row_buffer_size = cur_row->data.cells_amount * MAX_CSV_CELL_SIZE + // max size that could cells fit
+				cur_row->data.cells_amount - 1 +									// delimiter beetween cells
+				1;																	// null-terminator
+		char row_buffer[row_buffer_size];
+		memset(row_buffer, 0, row_buffer_size); 
 		concat_csv_row(cur_row->data, metadata, row_buffer);
+
 		dprintf(output_fd, "%s\n", row_buffer);
 	}
 	return 0;
+}
+
+uint16_t get_rows_amount(csv_t* csv) {
+	struct csv_row* cur_row = csv->csv_row;
+	uint16_t size = 0;
+	while(cur_row) {
+		++size;
+		cur_row = cur_row->next;
+	}
+	return size;
+}
+
+
+void debug_print_csv(csv_t* csv, FILE* output_stream) {
+	struct csv_row* cur_row = csv->csv_row;
+	printf("CSV size: %d\n", get_rows_amount(csv));
+	while(cur_row) {
+		debug_print_csv_row(cur_row->data, output_stream);
+		cur_row = cur_row->next;
+	}
+
 }

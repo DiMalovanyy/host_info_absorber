@@ -7,7 +7,6 @@
 
 static const uint16_t test_column_count = 5;
 
-
 csv_data_t generated_test_data(int seed) {
 	csv_data_t csv_row = alloc_csv_row(test_column_count);
 
@@ -19,9 +18,9 @@ csv_data_t generated_test_data(int seed) {
 		sprintf(cell_buf, "%d%s%d", cell_index, "some", seed);
 		strcpy(csv_row.cells[cell_index], cell_buf);
 	}
+	csv_row.cells_amount = test_column_count;
 	return csv_row;
 }
-
 
 void test_csv_utils_alloc_free() {
 	TEST_TITLE("test csv row allocation and free");
