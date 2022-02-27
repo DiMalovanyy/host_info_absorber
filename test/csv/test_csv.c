@@ -18,7 +18,23 @@ void csv_basic_usage() {
 	TEST_TITLE("test basic usage of csv");
 	csv_t* test_csv = create_csv(4, ',');
 
+	append_cell_to_csv(test_csv, "aaa");
+	append_cell_to_csv(test_csv, "bbb");
+	commit_row_to_csv(test_csv);
+
+	
+	append_cell_to_csv(test_csv, "bbb");
+	commit_row_to_csv(test_csv);
+
+	append_cell_to_csv(test_csv, "aaa");
+	append_cell_to_csv(test_csv, "aaa");
+	append_cell_to_csv(test_csv, "aaa");
+	append_cell_to_csv(test_csv, "bbb");
+	append_cell_to_csv(test_csv, "bbb");
+	append_cell_to_csv(test_csv, "bbb");
+
 	//serialize_csv(test_csv, 1);
+	//debug_print_csv(test_csv, stdout);
 
 	TEST_SUCCESS();
 	free_csv(test_csv);

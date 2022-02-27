@@ -45,6 +45,7 @@ csv_t* create_csv(uint16_t columns_count, char delimiter);
 void free_csv(csv_t* csv);
 
 void append_cell_to_csv(csv_t* csv, const char* data);
+void commit_row_to_csv(csv_t* csv);
 void append_row_to_csv(csv_t* csv, const csv_data_t row_data);
 int serialize_csv(const csv_t* csv, int output_fd);
 

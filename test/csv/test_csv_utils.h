@@ -25,7 +25,7 @@ csv_data_t generated_test_data(int seed) {
 void test_csv_utils_alloc_free() {
 	TEST_TITLE("test csv row allocation and free");
 	csv_data_t csv_row = alloc_csv_row(test_column_count);
-	free_csv_row(csv_row, test_column_count);
+	free_csv_row(csv_row);
 
 	TEST_SUCCESS();
 }
@@ -52,9 +52,9 @@ void test_csv_utils_compare_rows() {
 	TEST_SUCCESS();
 
 	fail:
-	free_csv_row(test1, test_column_count);
-	free_csv_row(test2, test_column_count);
-	free_csv_row(test3, test_column_count);
+	free_csv_row(test1);
+	free_csv_row(test2);
+	free_csv_row(test3);
 }
 
 void test_csv_utils_copy_rows() {
@@ -70,9 +70,9 @@ void test_csv_utils_copy_rows() {
 	TEST_SUCCESS();
 	fail:
 	if (test2.cells) {
-		free_csv_row(test2, test_column_count);
-	}
-	free_csv_row(test1, test_column_count);
+		free_csv_row(test2);
+	}	
+	free_csv_row(test1);
 }
 
 void test_csv_utils_concatanate_rows() {
@@ -100,7 +100,7 @@ void test_csv_utils_concatanate_rows() {
 	
 	TEST_SUCCESS();
 	fail:
-	free_csv_row(test, test_column_count);
+	free_csv_row(test);
 
 }
 

@@ -6,6 +6,7 @@
 #include <sys/errno.h>
 
 #include "utils/protocol.h"
+#include "utils/csv/csv.h"
 
 #define FILE_NAME_SIZE 256
 
@@ -14,7 +15,7 @@ void print_help(char *script_name) {
 }
 
 int write_header(int output_fd) {
-	
+		
 	
 
 	return 0;

@@ -23,7 +23,7 @@ void free_csv(csv_t* csv) {
 	while(cur_row) {
 		struct csv_row* prev_row = cur_row;
 		cur_row = cur_row->next;
-		free_csv_row(prev_row->data, csv->metadata->size.columns_count);
+		free_csv_row(prev_row->data);
 		free(prev_row);
 	}
 	free(csv->metadata);
@@ -56,7 +56,27 @@ void append_cell_to_csv(csv_t* csv, const char* data) {
 			csv->csv_row = new_row;
 		}
 	}
+}
 
+void commit_row_to_csv(csv_t* csv) {
+	struct csv_row* cur_row = csv->csv_row;
+	while (cur_row && cur_row->next) {
+		cur_row = cur_row->next;
+	}
+	if (cur_row && cur_row->data.cells_amount == 0) { // No sense to commit line
+		return;	
+	}
+	struct csv_row* new_row = (struct csv_row*)malloc(sizeof(struct csv_row));
+	new_row->data = alloc_csv_row(csv->metadata->size.columns_count);
+	if (cur_row) {
+		new_row->prev = cur_row;
+		cur_row->next = new_row;
+		new_row->next = NULL;
+	} else {
+		new_row->prev = NULL;
+		new_row->next = NULL;
+		csv->csv_row = new_row;
+	}
 }
 
 void append_row_to_csv(csv_t* csv, const csv_data_t row_data) {

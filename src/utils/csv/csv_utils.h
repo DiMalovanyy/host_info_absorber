@@ -30,10 +30,10 @@ static inline csv_data_t copy_csv_row(const csv_data_t src, uint16_t column_amou
 	return data;
 }
 
-static inline void free_csv_row(csv_data_t src, uint16_t column_amount) {
+static inline void free_csv_row(csv_data_t src) {
 	char* csv_cell;
 	uint16_t cell_index;
-	for (cell_index = 0; cell_index < column_amount; cell_index++) {
+	for (cell_index = 0; cell_index < src.cells_amount; cell_index++) {
 		free(src.cells[cell_index]);
 	}
 	free(src.cells);
