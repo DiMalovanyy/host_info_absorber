@@ -16,6 +16,18 @@ void csv_constructor_desctructor() {
 //Check on working
 void csv_basic_usage() {
 	TEST_TITLE("test basic usage of csv");
+	csv_t* test_csv = create_csv(3, ',');
+
+	append_cell_to_csv(test_csv, "aaa");
+	append_cell_to_csv(test_csv, "bbb");
+	append_cell_to_csv(test_csv, "eee");
+
+
+	//debug_print_csv_row(test_csv->csv_row->data, 3, stdout);
+
+	serialize_csv(test_csv, 1);
+
+	free_csv(test_csv);
 }
 
 void csv_all() {

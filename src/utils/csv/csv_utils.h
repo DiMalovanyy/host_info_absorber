@@ -14,6 +14,7 @@ static inline csv_data_t alloc_csv_row(uint16_t column_amount) {
 	for(cell_index = 0; cell_index < column_amount; cell_index++) {
 		data.cells[cell_index] = (char*)malloc(sizeof(char) * MAX_CSV_CELL_SIZE);
 	}
+	data.cells_amount = 0;
 	return data;
 }
 

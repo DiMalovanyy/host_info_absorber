@@ -20,12 +20,12 @@ typedef struct {
 
 typedef struct {
 	csv_size_t size;
-	//csv_index_t index;
 	char delimiter;
 } csv_metadata_t;
 
 typedef struct {
 	char ** cells;
+	uint16_t cells_amount;
 } csv_data_t;
 
 //bi-directional csv row linked list
@@ -43,9 +43,9 @@ typedef struct {
 csv_t* create_csv(uint16_t columns_count, char delimiter);
 void free_csv(csv_t* csv);
 
-//Important: this function don't take ownership of row_data
-int append_row_to_csv(csv_t* csv, const csv_data_t* row_data);
-int serialize(const csv_t* csv, int output_fd);
+void append_cell_to_csv(csv_t* csv, const char* data);
+void append_row_to_csv(csv_t* csv, const csv_data_t row_data);
+int serialize_csv(const csv_t* csv, int output_fd);
 
 
 #endif
