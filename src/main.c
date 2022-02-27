@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <sys/errno.h>
 
-#include "protocol.h"
+#include "utils/protocol.h"
 
 #define FILE_NAME_SIZE 256
 
@@ -21,6 +21,7 @@ int write_header(int output_fd) {
 }
 
 int main(int argc, char **argv) {
+	//TODO: Functional for single parse
 	if (argc < 2 || argc > 3) {
 		print_help(argv[0]);
 		exit(-1);

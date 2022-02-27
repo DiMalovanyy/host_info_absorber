@@ -27,7 +27,7 @@ static const protocol_t protocols[] = {
 
 static const uint32_t protocol_size = 13;
 
-inline int get_protocol_by_port(uint16_t port_num, char *dst)  {
+static inline int get_protocol_by_port(uint16_t port_num, char *dst)  {
 	uint32_t i;
 	for (i = 0; i < protocol_size; i++) {
 		if (protocols[i].port_num == port_num) {

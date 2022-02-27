@@ -5,3 +5,4 @@ absorber
 *.numbers
 .DS_Store
 compile_commands.json
+absorber_test
