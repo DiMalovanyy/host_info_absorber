@@ -4,3 +4,4 @@ absorber
 *.csv
 *.numbers
 .DS_Store
+compile_commands.json
