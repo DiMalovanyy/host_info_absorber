@@ -110,6 +110,9 @@ int serialize_csv(const csv_t* csv, int output_fd) {
 	}
 
 	for(;cur_row != NULL; cur_row = cur_row -> next) {
+		if (cur_row->data.cells_amount == 0) {
+			continue;
+		}
 		uint16_t row_buffer_size = cur_row->data.cells_amount * MAX_CSV_CELL_SIZE + // max size that could cells fit
 				cur_row->data.cells_amount - 1 +									// delimiter beetween cells
 				1;																	// null-terminator
