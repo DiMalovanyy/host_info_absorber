@@ -43,6 +43,7 @@ EOF
 cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   # script cleanup here
+  msg ${YELLOW}"Processing ${hostname} finished.${NOFORMAT}"
 }
 
 setup_colors() {
@@ -97,10 +98,53 @@ setup_colors
 # Script logic starts here
 # ********************************************************************
 
+# @params:
+#	nameserver_name
+research_nameserver() {
+	local nameserver_name=${1}
+	local ipv4_nameserver_addresses=( $(dig +short -q ${nameserver_name} -t A) )
+	local ipv6_nameserver_addresses=( $(dig +short -q ${nameserver_name} -t AAAA) )
+
+	#Try to get AXFR from server
+	local axfr_response="$(dig +short -q ${hostname} @${nameserver_name} axfr)"
+	if [ ${is_debug} -eq 1 ]; then
+		msg "Start processing ${nameserver_name} nameserver"
+		if [ ${#ipv4_nameserver_addresses[@]} -ne 0 ]; then
+			msg "\t${nameserver_name}(v4)\t - \t ${ipv4_nameserver_addresses[*]}"
+		fi
+		if [ ${#ipv6_nameserver_addresses[@]} -ne 0 ]; then
+			msg "\t${nameserver_name}(v6)\t - \t ${ipv6_nameserver_addresses[*]}"
+		fi
+		if echo ${axfr_response} | grep -q "failed"; then
+			msg "\t${ORANGE}Could not get zone setting by AXFR${NOFORMAT}"
+		else
+			msg "\t${GREEN}Successfully recevied zone${NOFORMAT}"
+		fi
+	fi
+}
+
+
 msg "${ORANGE}Start processing ${hostname}...${NOFORMAT}"
 
 #Get all addresses
-ipv4_addresses=( $(dig +short ${hostname} A) )
-ipv6_addresses=( $(dig +short ${hostname} AAAA) )
+#NOTE: This will always get ip_address from DNS cache
+ipv4_addresses=( $(dig +short -q ${hostname} -t A) )
+if [ ${is_debug} -eq 1 ] && [ ${#ipv4_addresses[@]} -ne 0 ]; then
+	msg "IPv4 addresses: ${ipv4_addresses[*]}"
+fi
+ipv6_addresses=( $(dig +short -q ${hostname} -t AAAA) )
+if [ ${is_debug} -eq 1 ] && [ ${#ipv6_addresses[@]} -ne 0 ]; then
+	msg "IPv6 addresses: ${ipv6_addresses[*]}"
+fi
 
+
+#Search all NS (nameservers) in zone
+nameservers=( $(dig +short -q ${hostname} -t NS) )
+if [ ${is_debug} -eq 1 ] && [ ${#nameservers[@]} -ne 0 ]; then
+	msg "Domain nameservers: ${nameservers[*]}"
+fi
+
+for nameserver in "${nameservers[@]}"; do
+	research_nameserver ${nameserver}
+done
 
