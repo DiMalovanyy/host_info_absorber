@@ -5,13 +5,14 @@ INCLUDE_DIRS=-I/usr/local/include\
 			 -I$(CUR_DIR)/src/
 
 LIBRARY_DIRS=-L/usr/local/lib
+LIBRARY=-ldns
 
 all: absorber absorber_test
 	@echo "[Make]: all"
 
 absorber: main.o csv.o
 	@echo "[Make]: executable target"
-	gcc -o absorber $(INCLUDE_DIRS) $(LIBRARY_DIRS) main.o csv.o
+	gcc -o absorber $(INCLUDE_DIRS) $(LIBRARY_DIRS) $(LIBRARY) main.o csv.o
 
 main.o: src/main.c
 	gcc -c -o main.o src/main.c
