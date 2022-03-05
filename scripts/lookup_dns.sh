@@ -23,6 +23,7 @@ set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 is_debug=0
+is_axfr=0
 
 
 usage() {
@@ -35,6 +36,7 @@ Available options:
 -h, --help      Print this help and exit
 -v, --verbose   Print script run source code
 -d, --debug     Print script debug messages
+-a, --axfr      Check Zone transfering by AXRF
 --no-color      Disable colors in script
 EOF
   exit
@@ -44,6 +46,7 @@ cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   # script cleanup here
   msg ${YELLOW}"Processing ${hostname} finished.${NOFORMAT}"
+  exit 0
 }
 
 setup_colors() {
@@ -56,6 +59,24 @@ setup_colors() {
 
 msg() {
   echo >&2 -e "${1-}"
+}
+
+log_success() {
+	echo >&2 -e "[SUCCESS]: ${GREEN}${1-}${NOFORMAT}"
+}
+log_info() {
+	echo >&2 -e "[INFO]: ${1-}"
+}
+log_fail() {
+	echo >&2 -e "[FAIL]: ${RED}${1-}${NOFORMAT}"
+}
+log_warn() {
+	echo >&2 -e "[WARN]: ${YELLOW}${1-}${NOFORMAT}"
+}
+log_debug() {
+	if [ ${is_debug} -eq 1 ]; then
+		echo >&2 -e "[DEBUG]: ${1-}"
+	fi
 }
 
 die() {
@@ -75,6 +96,7 @@ parse_params() {
     -h | --help) usage ;;
     -v | --verbose) set -x ;;
 	-d | --debug) is_debug=1 ;;
+	-a | --axfr) is_axfr=1 ;;
     --no-color) NO_COLOR=1 ;;
     -?*) die "Unknown option: $1" ;;
     *) hostname=$1
@@ -98,6 +120,15 @@ setup_colors
 # Script logic starts here
 # ********************************************************************
 
+# @note: function check if host is availabale
+# @params:
+#    ip_address
+check_host_discovering() {
+	
+
+
+}
+
 # @params:
 #	nameserver_name
 research_nameserver() {
@@ -106,45 +137,48 @@ research_nameserver() {
 	local ipv6_nameserver_addresses=( $(dig +short -q ${nameserver_name} -t AAAA) )
 
 	#Try to get AXFR from server
-	local axfr_response="$(dig +short -q ${hostname} @${nameserver_name} axfr)"
-	if [ ${is_debug} -eq 1 ]; then
-		msg "Start processing ${nameserver_name} nameserver"
-		if [ ${#ipv4_nameserver_addresses[@]} -ne 0 ]; then
-			msg "\t${nameserver_name}(v4)\t - \t ${ipv4_nameserver_addresses[*]}"
-		fi
-		if [ ${#ipv6_nameserver_addresses[@]} -ne 0 ]; then
-			msg "\t${nameserver_name}(v6)\t - \t ${ipv6_nameserver_addresses[*]}"
-		fi
+	log_debug "Start processing ${nameserver_name} nameserver"
+	if [ ${#ipv4_nameserver_addresses[@]} -ne 0 ]; then
+		log_debug "\t${nameserver_name}(v4)\t - \t ${ipv4_nameserver_addresses[*]}"
+	fi
+	if [ ${#ipv6_nameserver_addresses[@]} -ne 0 ]; then
+		log_debug "\t${nameserver_name}(v6)\t - \t ${ipv6_nameserver_addresses[*]}"
+	fi
+	if [ ${is_axfr} -eq 1 ]; then
+		local axfr_response="$(dig +short -q ${hostname} @${nameserver_name} axfr)"
 		if echo ${axfr_response} | grep -q "failed"; then
-			msg "\t${ORANGE}Could not get zone setting by AXFR${NOFORMAT}"
+			log_debug "\t${ORANGE}Could not get zone setting by AXFR${NOFORMAT}"
 		else
-			msg "\t${GREEN}Successfully recevied zone${NOFORMAT}"
+			log_success "${GREEN}Successfully recevied zone of nameserver: ${nameserver_name} for host: ${hostname}.${NOFORMAT}"
+			log_info "Please contact script author <dmitrymalovanyy@gmail.com>"
 		fi
 	fi
 }
 
 
-msg "${ORANGE}Start processing ${hostname}...${NOFORMAT}"
+log_info "${ORANGE}Start processing ${hostname}...${NOFORMAT}"
 
 #Get all addresses
 #NOTE: This will always get ip_address from DNS cache
 ipv4_addresses=( $(dig +short -q ${hostname} -t A) )
-if [ ${is_debug} -eq 1 ] && [ ${#ipv4_addresses[@]} -ne 0 ]; then
-	msg "IPv4 addresses: ${ipv4_addresses[*]}"
+if [ ${#ipv4_addresses[@]} -ne 0 ]; then
+	log_debug "IPv4 addresses: ${ipv4_addresses[*]}"
 fi
 ipv6_addresses=( $(dig +short -q ${hostname} -t AAAA) )
-if [ ${is_debug} -eq 1 ] && [ ${#ipv6_addresses[@]} -ne 0 ]; then
-	msg "IPv6 addresses: ${ipv6_addresses[*]}"
+if [ ${#ipv6_addresses[@]} -ne 0 ]; then
+	log_debug "IPv6 addresses: ${ipv6_addresses[*]}"
 fi
 
 
 #Search all NS (nameservers) in zone
 nameservers=( $(dig +short -q ${hostname} -t NS) )
-if [ ${is_debug} -eq 1 ] && [ ${#nameservers[@]} -ne 0 ]; then
-	msg "Domain nameservers: ${nameservers[*]}"
+if [ ${#nameservers[@]} -ne 0 ]; then
+	log_debug "Domain nameservers: ${nameservers[*]}"
 fi
 
 for nameserver in "${nameservers[@]}"; do
 	research_nameserver ${nameserver}
 done
+
+
 
