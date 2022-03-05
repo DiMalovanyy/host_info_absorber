@@ -124,8 +124,8 @@ setup_colors
 # @params:
 #    ip_address
 check_host_discovering() {
-	
-
+	#First check by default "Ping scan"
+	log_debug "Check if host ${1} is availabale"
 
 }
 
@@ -174,6 +174,9 @@ fi
 nameservers=( $(dig +short -q ${hostname} -t NS) )
 if [ ${#nameservers[@]} -ne 0 ]; then
 	log_debug "Domain nameservers: ${nameservers[*]}"
+else
+	log_fail "hostname ${hostname} does not have nameservers"
+	exit 0
 fi
 
 for nameserver in "${nameservers[@]}"; do
