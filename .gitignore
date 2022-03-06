@@ -2,6 +2,8 @@
 absorber
 *.o
 *.csv
+resources/*
+!resources/*.csv
 *.numbers
 .DS_Store
 compile_commands.json

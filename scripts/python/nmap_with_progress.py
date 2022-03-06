@@ -57,11 +57,17 @@ def execute_command():
                         t.reset()
                         t.set_description(desc=current_status_message, refresh=True)
                     t.update(int(cur_percent) - t.n)
+                    continue
                 elif "Stats" in line:
                     continue
                 elif need_clear:
                     need_clear = False
                     t.update(int(100) - t.n)
+
+                t.clear()
+
+                #Print command output to stdout
+                print(line)
     except:
         print ("Exception occured:", sys.exc_info())
         return
