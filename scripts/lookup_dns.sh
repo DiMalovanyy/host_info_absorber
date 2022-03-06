@@ -9,6 +9,11 @@
 # this file. If not, please write to: , or visit :
 #
 
+#TODO:
+# Make sense to scan some networks:
+#	Network where host was found
+#	Network where DNS servers located
+#Rewrite all 'nmap' usage with python/nmap_with_progress.py
 
 #Plan:
 # Found all nameservers bu given hostname
@@ -21,10 +26,11 @@
 
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+readonly script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+readonly nmap_binary=$(which nmap)
 is_debug=0
 is_axfr=0
-
+is_root=0
 
 usage() {
   cat <<EOF
@@ -45,7 +51,7 @@ EOF
 cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   # script cleanup here
-  msg ${YELLOW}"Processing ${hostname} finished.${NOFORMAT}"
+  msg "${YELLOW}Processing ${hostname} finished.${NOFORMAT}"
   exit 0
 }
 
@@ -110,22 +116,56 @@ parse_params() {
   # check required params and arguments
   [[ ${#args[@]} -eq 0 ]] && die "Missing script arguments"
 
+  if [ "$EUID" -eq 0 ]; then 
+	  is_root=1
+  else
+	  log_warn "For better scanning recomended to run with root privilage"
+  fi
+
+  if [ -z "${nmap_binary}" ]; then
+	  log_fail "Nmap required"
+	  die "Missing nmap binary"
+  else
+	  log_info "Using nmap: ${nmap_binary}"
+  fi
+
   return 0
 }
 
-parse_params "$@"
 setup_colors
+parse_params "$@"
 
 # ********************************************************************
 # Script logic starts here
 # ********************************************************************
 
-# @note: function check if host is availabale
+# @note: function ONLY check if host is availabale
 # @params:
 #    ip_address
 check_host_discovering() {
 	#First check by default "Ping scan"
 	log_debug "Check if host ${1} is availabale"
+	#@params:
+	#	-n  - Disable reverse DNS resolution
+	#   -oG - Grepable output
+	#   -sn - Not to perform port scaning after host discovering
+	#   -   - Inform that after '-' goes host/address
+	readonly local nmap_host_discovering_params = "-n -oG -sn - "
+
+	#1. Default host discoveri
+	#@packets
+	#	@root
+	#		ICMP echo request
+	#		TCP SYN to 443
+	#		TCP ACK to 80
+	#		ICMP timestamp
+	#		ARP (if local network)
+	#	@user
+	#		TCP SYN via connect syscall to 80 and 443
+	#readonly local nmap_host_discovering_output="$(nmap)"
+
+
+	print "AA\n"
 
 }
 
@@ -182,6 +222,5 @@ fi
 for nameserver in "${nameservers[@]}"; do
 	research_nameserver ${nameserver}
 done
-
 
 
