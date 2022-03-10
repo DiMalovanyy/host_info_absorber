@@ -31,6 +31,7 @@ readonly nmap_binary=$(which nmap)
 is_debug=0
 is_axfr=0
 is_root=0
+AWK_BINARY=""
 
 usage() {
   cat <<EOF
@@ -129,6 +130,26 @@ parse_params() {
 	  log_info "Using nmap: ${nmap_binary}"
   fi
 
+  #Check awk
+  which gawk &> /dev/null
+  if [ $? != 0 ]; then
+	  AWK_BINARY='gawk'
+  else
+	  which awk &> /dev/null
+	  if [ $? != 0 ]; then
+		  log_fail "Awk required"
+		  die "Missing awk binary"
+	  else
+		# Check required awk version and dialect
+		if [ ! awk --version 2>&1 | grep -q "GNU Awk" ]; then
+			log_fail "Required GNU dialect of awk (gawk)"
+			die "Missing gawk library"
+		else 
+			AWK_BINARY='awk'
+		fi
+	  fi
+  fi
+
   return 0
 }
 
@@ -144,13 +165,13 @@ parse_params "$@"
 #    ip_address
 check_host_discovering() {
 	#First check by default "Ping scan"
-	log_debug "Check if host ${1} is availabale"
+	log_debug "Check if address ${1} is availabale"
 	#@params:
 	#	-n  - Disable reverse DNS resolution
 	#   -oG - Grepable output
 	#   -sn - Not to perform port scaning after host discovering
 	#   -   - Inform that after '-' goes host/address
-	readonly local nmap_host_discovering_params = "-n -oG -sn - "
+	readonly local nmap_host_discovering_params = "-n -sn -oG - "
 
 	#1. Default host discoveri
 	#@packets
@@ -162,7 +183,8 @@ check_host_discovering() {
 	#		ARP (if local network)
 	#	@user
 	#		TCP SYN via connect syscall to 80 and 443
-	#readonly local nmap_host_discovering_output="$(nmap)"
+	readonly local nmap_host_discovering_output="$(nmap)"
+	local host_status = $(echo ${nmap_host_discovering_output}
 
 
 	print "AA\n"
