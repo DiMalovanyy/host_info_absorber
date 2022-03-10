@@ -127,7 +127,7 @@ parse_params() {
 	  log_fail "Nmap required"
 	  die "Missing nmap binary"
   else
-	  log_info "Using nmap: ${nmap_binary}"
+	  log_debug "Using nmap: ${nmap_binary}"
   fi
 
   #Check awk
@@ -141,11 +141,11 @@ parse_params() {
 		  die "Missing awk binary"
 	  else
 		# Check required awk version and dialect
-		if [ ! awk --version 2>&1 | grep -q "GNU Awk" ]; then
+		if awk --version 2>&1 | grep -q "GNU Awk" ; then
+			AWK_BINARY='awk'
+		else 
 			log_fail "Required GNU dialect of awk (gawk)"
 			die "Missing gawk library"
-		else 
-			AWK_BINARY='awk'
 		fi
 	  fi
   fi
@@ -162,16 +162,29 @@ parse_params "$@"
 
 # @note: function ONLY check if host is availabale
 # @params:
-#    ip_address
+#		ip_address
+#		is_ipv6 (1 if ipv6, 0 if ipv4)
+# @return:
+#		UP, DOWN, ERROR
+# @todo:
+#		1. Add TCP ACK ping (on specific ports)
+#		2. Add TCP SYN ping (on specific ports)
+#		3. Add UDP ping     (on specific ports)
+#       4. Add specific icmp ping types
+#		n. Add v6 support
 check_host_discovering() {
+	readonly local is_ipv6=$( [ $# -eq 1 ] && echo 0 || echo $2 )
 	#First check by default "Ping scan"
-	log_debug "Check if address ${1} is availabale"
+	#log_debug "Check if address ${1} is availabale"
 	#@params:
 	#	-n  - Disable reverse DNS resolution
 	#   -oG - Grepable output
 	#   -sn - Not to perform port scaning after host discovering
 	#   -   - Inform that after '-' goes host/address
-	readonly local nmap_host_discovering_params = "-n -sn -oG - "
+	local nmap_host_discovering_params="-n -sn"
+	[ ${is_ipv6} -eq 1 ] && local nmap_host_discovering_params="${nmap_host_discovering_params} -6"
+	#Add '-' to params to indicate that after goes address/host
+	local nmap_host_discovering_params="${nmap_host_discovering_params} -oG -"
 
 	#1. Default host discoveri
 	#@packets
@@ -183,29 +196,39 @@ check_host_discovering() {
 	#		ARP (if local network)
 	#	@user
 	#		TCP SYN via connect syscall to 80 and 443
-	readonly local nmap_host_discovering_output="$(nmap)"
-	local host_status = $(echo ${nmap_host_discovering_output}
+	readonly local default_host_discovery_status=$(nmap ${nmap_host_discovering_params} ${1} | \
+		awk '/Status:/ {print $5}')
+	[ $? -ne 0 ] && die "Some error occured while executing nmap. Nmap exit with code: $?"
+	[ -z ${default_host_discovery_status} ] && { log_warn "Awk could not get Status from nmap output"; echo "ERROR"; exit; }
+	[ "${default_host_discovery_status}" == "Up" ] && { echo "UP"; exit; }
 
-
-	print "AA\n"
-
+	echo "DOWN"
 }
 
 # @params:
 #	nameserver_name
+# @todo:
+#	ipv6 hostname discovering support
 research_nameserver() {
 	local nameserver_name=${1}
 	local ipv4_nameserver_addresses=( $(dig +short -q ${nameserver_name} -t A) )
 	local ipv6_nameserver_addresses=( $(dig +short -q ${nameserver_name} -t AAAA) )
 
-	#Try to get AXFR from server
-	log_debug "Start processing ${nameserver_name} nameserver"
+	log_debug "Start processing ${BLUE}${nameserver_name}${NOFORMAT} nameserver"
 	if [ ${#ipv4_nameserver_addresses[@]} -ne 0 ]; then
-		log_debug "\t${nameserver_name}(v4)\t - \t ${ipv4_nameserver_addresses[*]}"
+		log_debug "\t${nameserver_name}(v4):"
+		for nameserver_addr_v4 in "${ipv4_nameserver_addresses[@]}"; do	
+			log_debug "\t\t${nameserver_addr_v4} - $(check_host_discovering ${nameserver_addr_v4})"
+		done
 	fi
 	if [ ${#ipv6_nameserver_addresses[@]} -ne 0 ]; then
-		log_debug "\t${nameserver_name}(v6)\t - \t ${ipv6_nameserver_addresses[*]}"
+		log_debug "\t${nameserver_name}(v6):"
+		for nameserver_addr_v6 in "${ipv6_nameserver_addresses[@]}"; do
+			log_debug "\t\t${nameserver_addr_v6} - (Check ipv6 host not available)"
+		done
 	fi
+
+	#Check if axfr and it is able to transfer dns
 	if [ ${is_axfr} -eq 1 ]; then
 		local axfr_response="$(dig +short -q ${hostname} @${nameserver_name} axfr)"
 		if echo ${axfr_response} | grep -q "failed"; then
